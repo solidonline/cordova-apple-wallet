@@ -362,10 +362,10 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
     self.completionHandler = handler;
     
     // the leaf certificate will be the first element of that array and the sub-CA certificate will follow.
-    NSString *certificateOfIndexZeroString = certificates[0];
-    NSString *certificateOfIndexOneString = certificates[1];
-    NSString *nonceString = nonce;
-    NSString *nonceSignatureString = nonceSignature;
+    NSString *certificateOfIndexZeroString = [certificates[0] base64EncodedStringWithOptions:0];
+    NSString *certificateOfIndexOneString = [certificates[1] base64EncodedStringWithOptions:0];
+    NSString *nonceString = [nonce base64EncodedStringWithOptions:0];
+    NSString *nonceSignatureString = [nonceSignature base64EncodedStringWithOptions:0];
     
     NSDictionary* dictionary = @{ @"data" :
                                       @{
