@@ -128,6 +128,7 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
             PKSecureElementPass *paymentPass = [pass secureElementPass];
             if ([[paymentPass primaryAccountNumberSuffix] isEqualToString:cardSuffix]) {
                 cardAddedtoPasses = true;
+                cardEligible = false;
             }
         }
     } else {
@@ -136,6 +137,7 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
           PKPaymentPass * paymentPass = [pass paymentPass];
           if([[paymentPass primaryAccountNumberSuffix] isEqualToString:cardSuffix])
             cardAddedtoPasses = true;
+            cardEligible = false;
         }
     }
    
@@ -145,11 +147,13 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
         [session activateSession];
         
         if ([session isPaired]) { // Check if the iPhone is paired with the Apple Watch
+          cardEligible = true;
           if (@available(iOS 13.5, *)) { // remotePaymentPasses is deprecated in iOS 13.5
             paymentPasses = [passLibrary remoteSecureElementPasses];
             for (PKSecureElementPass *pass in paymentPasses) {
               if ([[pass primaryAccountNumberSuffix] isEqualToString:cardSuffix]) {
-                cardAddedtoPasses = true;
+                cardAddedtoRemotePasses = true;
+                cardEligible = false;
               }
             }
           } else {
@@ -158,18 +162,13 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
               PKPaymentPass * paymentPass = [pass paymentPass];
                 if([[paymentPass primaryAccountNumberSuffix] isEqualToString:cardSuffix])
                   cardAddedtoRemotePasses = true;
+                  cardEligible = false;
                 }
             }
 
         }
-        else
-            cardAddedtoRemotePasses = true;
     }
-    else
-        cardAddedtoRemotePasses = true;
-    
-    cardEligible = !cardAddedtoPasses || !cardAddedtoRemotePasses;
-    
+
     CDVPluginResult *pluginResult;
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:cardEligible];
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
