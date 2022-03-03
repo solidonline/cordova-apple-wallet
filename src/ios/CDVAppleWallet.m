@@ -117,6 +117,7 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
     NSString * cardSuffix = [command.arguments objectAtIndex:0];
     Boolean cardEligible = true;
     Boolean cardAddedtoPasses = false;
+    Boolean cardAddedtoRemotePasses = false;
     
     PKPassLibrary *passLibrary = [[PKPassLibrary alloc] init];
 //     NSArray<PKPass *> *paymentPasses = [passLibrary passesOfType:PKPassTypePayment];
@@ -156,13 +157,18 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
             for (PKPass *pass in paymentPasses) {
               PKPaymentPass * paymentPass = [pass paymentPass];
                 if([[paymentPass primaryAccountNumberSuffix] isEqualToString:cardSuffix])
-                  cardAddedtoPasses = true;
+                  cardAddedtoRemotePasses = true;
                 }
             }
+
         }
+        else
+            cardAddedtoRemotePasses = true;
     }
+    else
+        cardAddedtoRemotePasses = true;
     
-    cardEligible = !cardAddedtoPasses;
+    cardEligible = !cardAddedtoPasses || !cardAddedtoRemotePasses;
     
     CDVPluginResult *pluginResult;
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:cardEligible];
