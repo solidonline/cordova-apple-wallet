@@ -80,12 +80,11 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
         [session activateSession];
         
         if ([session isPaired]) { // Check if the iPhone is paired with the Apple Watch
-
           if (@available(iOS 13.5, *)) {
                 paymentPasses = [passLibrary remoteSecureElementPasses]; // remotePaymentPasses is deprecated in iOS13.5
                 for (PKSecureElementPass *pass in paymentPasses) {
                     if ([[pass primaryAccountIdentifier] isEqualToString:cardIdentifier]) {
-                        cardAddedtoPasses = true;
+                        cardAddedtoRemotePasses = true;
                     }
                 }
             } else {
@@ -96,16 +95,18 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
                         cardAddedtoRemotePasses = true;
                 }
             }
-          
-        }
-        else
+        } else {
             cardAddedtoRemotePasses = true;
-    }
-    else
-        cardAddedtoRemotePasses = true;
 
-    cardEligible = !cardAddedtoPasses || !cardAddedtoRemotePasses;
-    
+        }
+    } else {
+        cardAddedtoRemotePasses = true;
+    }
+
+    if (cardAddedtoPasses && cardAddedtoRemotePasses) {
+        cardEligible = false;
+    }
+
     CDVPluginResult *pluginResult;
     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:cardEligible];
     //pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:[passLibrary canAddPaymentPassWithPrimaryAccountIdentifier:cardIdentifier]];
@@ -118,7 +119,7 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
     Boolean cardEligible = true;
     Boolean cardAddedtoPasses = false;
     Boolean cardAddedtoRemotePasses = false;
-    
+
     PKPassLibrary *passLibrary = [[PKPassLibrary alloc] init];
 //     NSArray<PKPass *> *paymentPasses = [passLibrary passesOfType:PKPassTypePayment];
     NSArray *paymentPasses = [[NSArray alloc] init];
@@ -128,7 +129,7 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
             PKSecureElementPass *paymentPass = [pass secureElementPass];
             if ([[paymentPass primaryAccountNumberSuffix] isEqualToString:cardSuffix]) {
                 cardAddedtoPasses = true;
-                cardEligible = false;
+                NSLog(@"LOG checkCardEligibilityBySuffix ios 13 iphone cardAddedtoPasses = true");
             }
         }
     } else {
@@ -137,23 +138,22 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
           PKPaymentPass * paymentPass = [pass paymentPass];
           if([[paymentPass primaryAccountNumberSuffix] isEqualToString:cardSuffix])
             cardAddedtoPasses = true;
-            cardEligible = false;
+            NSLog(@"LOG checkCardEligibilityBySuffix ios before 13 iphone cardAddedtoPasses = true");
         }
     }
-   
+
     if (WCSession.isSupported) { // check if the device support to handle an Apple Watch
         WCSession *session = [WCSession defaultSession];
         [session setDelegate:self.appDelegate];
         [session activateSession];
-        
+
         if ([session isPaired]) { // Check if the iPhone is paired with the Apple Watch
-          cardEligible = true;
           if (@available(iOS 13.5, *)) { // remotePaymentPasses is deprecated in iOS 13.5
             paymentPasses = [passLibrary remoteSecureElementPasses];
             for (PKSecureElementPass *pass in paymentPasses) {
               if ([[pass primaryAccountNumberSuffix] isEqualToString:cardSuffix]) {
-                cardAddedtoRemotePasses = true;
-                cardEligible = false;
+                  cardAddedtoRemotePasses = true;
+                NSLog(@"LOG checkCardEligibilityBySuffix 13 iwatch isPaired cardAddedtoPasses = true");
               }
             }
           } else {
@@ -161,12 +161,19 @@ typedef void (^completedPaymentProcessHandler)(PKAddPaymentPassRequest *request)
             for (PKPass *pass in paymentPasses) {
               PKPaymentPass * paymentPass = [pass paymentPass];
                 if([[paymentPass primaryAccountNumberSuffix] isEqualToString:cardSuffix])
-                  cardAddedtoRemotePasses = true;
-                  cardEligible = false;
+                    cardAddedtoRemotePasses = true;
+                    NSLog(@"LOG checkCardEligibilityBySuffix before 13 iwatch isPaired cardAddedtoPasses = true");
                 }
             }
-
+        } else {
+            cardAddedtoRemotePasses = true;
         }
+    } else {
+        cardAddedtoRemotePasses = true;
+    }
+
+    if (cardAddedtoPasses && cardAddedtoRemotePasses) {
+        cardEligible = false;
     }
 
     CDVPluginResult *pluginResult;
